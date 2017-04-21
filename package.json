@@ -1,7 +1,7 @@
 {
   "name": "promise-keeper",
   "version": "0.0.1",
-  "description": "Minimalist (and full) implementation of JavaScript Promises",
+  "description": "Minimalist (and complete) implementation of JavaScript Promises",
   "scripts": {
     "build": "rollup -c",
     "test": "mocha ./test/*.js",
