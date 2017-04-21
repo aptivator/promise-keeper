@@ -3,7 +3,7 @@ import handlerGenerator from './handler-generator';
 import {resolveHandlers, rejectHandlers, statuses, values} from '../../../../lib/vars';
 
 export default (key, status, handler, resolver, rejector) => {
-  let handlers = status? resolveHandlers : rejectHandlers;
+  let handlers = status ? resolveHandlers : rejectHandlers;
   
   if(!handler) {
     if(!status) {
