@@ -12,7 +12,6 @@ possible while maintaining the necessary structure and clarity.
 
 This tool will work in a production environment.  Such usage is discouraged.
 Promise Keeper was written for the expressed objectives and no effort has been 
-made to optimize its code for the fullest performance.  Promises are now 
-standard in all modern browsers and latest node.js implementation.  A developer 
+made to optimize its code for the fullest performance.  Promises support is now 
+standard in all modern browsers and latest node.js versions.  A developer 
 is encouraged to rely on those.
-
