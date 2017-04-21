@@ -5,7 +5,7 @@
   "scripts": {
     "build": "rollup -c",
     "test": "mocha ./test/*.js",
-    "watch": "npm test && run-when-changed --watch \"dist/promise-keeper\" --watch \"test/*.js\" --exec \"npm test\"",
+    "watch": "npm test && run-when-changed --watch \"dist/promise-keeper.js\" --watch \"test/*.js\" --exec \"npm test\"",
     "dev": "rollup -c -w & npm run watch"
   },
   "main": "dist/promise-keeper.js",

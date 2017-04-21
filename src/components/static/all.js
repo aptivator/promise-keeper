@@ -1,8 +1,8 @@
 import emptyPromiser from '../../lib/empty-promiser';
 
-export default promises => {
+export default (promises = []) => {
   let results = [];
-  let {length} = promises || [];
+  let {length} = promises;
   let fulfilledCount = 0;
   let [promise, resolver, rejector] = emptyPromiser();
   
