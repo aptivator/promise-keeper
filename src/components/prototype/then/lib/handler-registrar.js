@@ -16,7 +16,7 @@ export default (key, status, handler, resolver, rejector) => {
   handler = handlerGenerator(handler, resolver, rejector);
   
   if(statuses.get(key) === status) {
-    return setTimeout(() => handler(values.get(key)));
+    return handler(values.get(key));
   }
   
   handlers.get(key).push(handler);
