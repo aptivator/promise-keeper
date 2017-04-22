@@ -1,15 +1,26 @@
 import PromiseKeeper from './constructor';
-import {rejectHandlers, resolveHandlers, statuses, values} from '../lib/vars';
+import {errors, rejectHandlers, resolveHandlers, statuses, values} from '../lib/vars';
 
 const warningTitle = 'UnhandledPromiseRejectionWarning';
 const warningMessage = 'Unhandled promise rejection';
 
 export default function executor(value, isRejector) {
-  if(value instanceof PromiseKeeper) {
-    return value.then(
-      value => executor.call(this, value),
-      value => executor.call(this, value, true)
-    );
+  let isPromiseKeeper = value instanceof PromiseKeeper;
+  let error = isPromiseKeeper ? errors.get(value) : null;
+  
+  if(isPromiseKeeper) {
+    if(!error) {
+      return value.then(
+        value => executor.call(this, value),
+        value => executor.call(this, value, true)
+      );
+    }
+  }
+  
+  if(error) {
+    let {e, timeout} = error;
+    clearTimeout(timeout);
+    throw e;
   }
   
   setTimeout(() => {
