@@ -8,17 +8,14 @@ describe('promise-keeper', function() {
   it('tests', done => {
     let promise = new PromiseKeeper(resolve => {
       resolve(new PromiseKeeper(resolve => {
-        resolve(new PromiseKeeper(resolve => {
-          throw new Error('inner inner reject');
+        resolve(new PromiseKeeper((resolve, reject) => {
+          reject('reject');
+          resolve(22);
         }));
-        
-        throw new Error('inner reject');
       }));
-      
-      throw new Error('reject');
     });
-
-    promise.catch(e => console.log(e.message));
+    
+    promise.then(c, c).catch(c);
     
     setTimeout(() => done(), 400);
   });  

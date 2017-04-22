@@ -24,12 +24,16 @@ export default function executor(value, isRejector) {
   }
   
   setTimeout(() => {
+    if(typeof statuses.get(this) !== 'undefined') {
+      return;
+    }
+    
     let handlers = isRejector ? rejectHandlers : resolveHandlers;
     let thisHandlers = handlers.get(this);
     
     values.set(this, value);
     statuses.set(this, !isRejector);
-
+    
     if(thisHandlers.length) {
       return thisHandlers.forEach(handler => handler(value));
     } 
