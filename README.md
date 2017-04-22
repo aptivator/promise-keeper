@@ -8,7 +8,7 @@ becoming a ubiquitous way to wrangle time-variant software operations.  This
 utility was written for demonstration and education purposes and to provide just 
 one blueprint to understand Promises by looking at their implementation.  To 
 make that inquiry process manageable the code footprint was kept as small as 
-possible (about 130 lines) while maintaining the necessary structure and clarity.
+possible (about 150 lines) while maintaining the necessary structure and clarity.
 
 This tool will work in a production environment.  Such usage is discouraged.
 Promise Keeper was written for the expressed objectives and no effort has been 

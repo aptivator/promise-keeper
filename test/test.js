@@ -6,8 +6,8 @@ let c = console.log.bind(console);
 describe('promise-keeper', function() {
   this.timeout(500);
   it('tests', done => {
-    Promise.reject('rejected');
-    PromiseKeeper.reject('rejected');
+    let promise = new PromiseKeeper(resolve => resolve(PromiseKeeper.reject('rejected')));
+    promise.catch(m => PromiseKeeper.reject(m)).catch(c);
     setTimeout(() => done(), 400);
   });  
 });
