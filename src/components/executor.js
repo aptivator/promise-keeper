@@ -1,6 +1,5 @@
-import PromiseKeeper from '../constructor';
-import {rejectHandlers, resolveHandlers} from '../../lib/vars';
-import {statuses, values} from '../../lib/vars';
+import PromiseKeeper from './constructor';
+import {rejectHandlers, resolveHandlers, statuses, values} from '../lib/vars';
 
 const warningTitle = 'UnhandledPromiseRejectionWarning';
 const warningMessage = 'Unhandled promise rejection';

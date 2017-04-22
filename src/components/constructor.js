@@ -1,4 +1,4 @@
-import executor from './internal/executor';
+import executor from './executor';
 import {resolveHandlers, rejectHandlers} from '../lib/vars';
 
 export default function(body) {
