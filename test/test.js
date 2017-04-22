@@ -23,4 +23,3 @@ describe('promise-keeper', function() {
     setTimeout(() => done(), 400);
   });  
 });
-
