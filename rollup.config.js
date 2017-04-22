@@ -3,7 +3,7 @@ let packageJson = require('./package.json');
 let {'jsnext:main': jsnext, main} = packageJson;
 
 export default {
-  moduleName: 'mongo-query-compiler',
+  moduleName: 'promise-keeper',
   entry: 'src/promise-keeper.js',
   targets: [{
     format: 'umd',
