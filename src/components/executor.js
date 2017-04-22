@@ -13,12 +13,11 @@ export default function executor(value, isRejector) {
   }
   
   setTimeout(() => {
-    let status = !isRejector;
-    let handlers = status ? resolveHandlers : rejectHandlers;
+    let handlers = isRejector ? rejectHandlers : resolveHandlers;
     let thisHandlers = handlers.get(this);
     
     values.set(this, value);
-    statuses.set(this, status);
+    statuses.set(this, !isRejector);
 
     if(thisHandlers.length) {
       return thisHandlers.forEach(handler => handler(value));
