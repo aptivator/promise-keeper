@@ -9,13 +9,12 @@ describe('promise-keeper', function() {
     let promise = new PromiseKeeper(resolve => {
       resolve(new PromiseKeeper(resolve => {
         resolve(new PromiseKeeper((resolve, reject) => {
-          reject('reject');
-          resolve(22);
+          throw new Error('reject');
         }));
       }));
     });
     
-    promise.then(c, c).catch(c);
+    promise.then(null, e => console.log(e.message));
     
     setTimeout(() => done(), 400);
   });  

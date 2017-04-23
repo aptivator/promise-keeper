@@ -6,6 +6,7 @@ export default function(body) {
   resolveHandlers.set(this, []);
   let resolver = value => executor.call(this, value);
   let rejector = reason => executor.call(this, reason, true);
+  
   try {
     body(resolver, rejector);
   } catch(e) {

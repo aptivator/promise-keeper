@@ -8,13 +8,11 @@ export default function executor(value, isRejector) {
   let isPromiseKeeper = value instanceof PromiseKeeper;
   let error = isPromiseKeeper ? errors.get(value) : null;
   
-  if(isPromiseKeeper) {
-    if(!error) {
-      return value.then(
-        value => executor.call(this, value),
-        value => executor.call(this, value, true)
-      );
-    }
+  if(isPromiseKeeper && !error) {
+    return value.then(
+      value => executor.call(this, value),
+      value => executor.call(this, value, true)
+    );
   }
   
   if(error) {
@@ -22,7 +20,7 @@ export default function executor(value, isRejector) {
     clearTimeout(timeout);
     throw e;
   }
-  
+
   setTimeout(() => {
     if(typeof statuses.get(this) !== 'undefined') {
       return;
