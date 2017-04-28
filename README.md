@@ -15,3 +15,20 @@ Promise Keeper was written for the expressed objectives and no effort has been
 made to optimize its code for the fullest performance.  Promises support is now 
 standard in all modern browsers and latest node.js versions.  A developer 
 is encouraged to rely on those.
+
+### Documentation
+
+`promise-keeper` works the same way as `Promise` implementation in Firefox
+browser.  Mozilla Development Network's [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
+guide is an excellent reference to get started with promises.  If working with
+this utility, employ `PromiseKeeper` instead of `Promise` as a constructor as
+illustrated below.
+
+```javascript
+let promise = new PromiseKeeper((resolve, reject) => {
+  setTimeout(() => resolve('resolved'), 1000);
+});
+
+promise.then(result => console.log(result));
+//prints 'resolved'
+```
