@@ -21,7 +21,7 @@ describe('race()', function() {
     let promise3 = new PromiseKeeper(resolve => setTimeout(() => resolve(45), 25));
     
     PromiseKeeper.race([promise1, promise2, promise3]).then(result => {
-      throw new Error('should not get here');
+      throw new Error('should not happen');
     }).catch(reason => {
       expect(reason).to.equal('rejected');
       done();
