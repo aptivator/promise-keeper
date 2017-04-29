@@ -22,15 +22,3 @@ is encouraged to rely on those.
 browser.  Mozilla Development Network's [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
 guide is a good reference to get started with promises.  Additionally, [test](https://github.com/aptivator/promise-keeper/tree/master/test)
 folder contains a comprehensive set of Promise examples.
-
-If working with this utility, employ `PromiseKeeper` instead of `Promise` as a 
-constructor as illustrated below.
-
-```javascript
-let promise = new PromiseKeeper((resolve, reject) => {
-  setTimeout(() => resolve('resolved'), 1000);
-});
-
-promise.then(result => console.log(result));
-//prints 'resolved'
-```
