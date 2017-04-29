@@ -1,8 +1,6 @@
 import PromiseKeeper from './constructor';
 import {errors, rejectHandlers, resolveHandlers, statuses, values} from '../lib/vars';
-
-const warningTitle = 'UnhandledPromiseRejectionWarning';
-const warningMessage = 'Unhandled promise rejection';
+import {warningMessage, warningTitle} from '../lib/vars';
 
 export default function executor(value, isRejector) {
   let isPromiseKeeper = value instanceof PromiseKeeper;
