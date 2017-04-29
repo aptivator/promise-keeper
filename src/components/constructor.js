@@ -1,4 +1,4 @@
-import executor from './executor';
+import executor from './executor/executor';
 import {errors, resolveHandlers, rejectHandlers} from '../lib/vars';
 
 export default function(body) {

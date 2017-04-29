@@ -1,6 +1,6 @@
-import PromiseKeeper from './constructor';
-import {errors, rejectHandlers, resolveHandlers, statuses, values} from '../lib/vars';
-import {warningMessage, warningTitle} from '../lib/vars';
+import PromiseKeeper from '../constructor';
+import {errors, rejectHandlers, resolveHandlers, statuses, values} from '../../lib/vars';
+import {unhandledRejectionWarning} from './lib/vars';
 
 export default function executor(value, isRejector) {
   let isPromiseKeeper = value instanceof PromiseKeeper;
@@ -35,7 +35,7 @@ export default function executor(value, isRejector) {
     } 
     
     if(isRejector) {
-      console.warn(`${warningTitle}: ${warningMessage} (reason: ${value})`);
+      console.warn(`${unhandledRejectionWarning} (reason: ${value})`);
     }         
   });
 }
