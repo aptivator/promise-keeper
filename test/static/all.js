@@ -21,7 +21,6 @@ describe('all()', function() {
     let promise3 = new PromiseKeeper((resolve, reject) => setTimeout(() => reject('rejected'), 25));
     
     PromiseKeeper.all([promise1, promise2, promise3]).then(results => {
-      expect(results).to.eql([25, 25, 25]);
       throw new Error('should not error out');
     }, reason => {
       expect(reason).to.equal('rejected');
