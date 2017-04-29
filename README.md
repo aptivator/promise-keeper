@@ -20,9 +20,11 @@ is encouraged to rely on those.
 
 `promise-keeper` works the same way as `Promise` implementation in Firefox
 browser.  Mozilla Development Network's [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
-guide is an excellent reference to get started with promises.  If working with
-this utility, employ `PromiseKeeper` instead of `Promise` as a constructor as
-illustrated below.
+guide is a good reference to get started with promises.  Additionally, [test](https://github.com/aptivator/promise-keeper/tree/master/test)
+folder contains a comprehensive set of Promise examples.
+
+If working with this utility, employ `PromiseKeeper` instead of `Promise` as a 
+constructor as illustrated below.
 
 ```javascript
 let promise = new PromiseKeeper((resolve, reject) => {
