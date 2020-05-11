@@ -8,7 +8,7 @@ export function executor(value, isRejector = false) {
 
   if(error) {
     let {e, timeout} = error;
-    clearImmediate(timeout);
+    clearTimeout(timeout);
     throw e;
   }
   
@@ -19,7 +19,7 @@ export function executor(value, isRejector = false) {
     );
   }
   
-  setImmediate(() => {
+  setTimeout(() => {
     let handlers = isRejector ? rejectors : resolvers;
     handlers = handlers.get(this);
 

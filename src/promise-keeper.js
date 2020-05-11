@@ -3,7 +3,6 @@ import {executor}                                       from './_lib/executor';
 import {errors, resolvers, rejectors, statuses, values} from './_lib/vars';
 import {thenPromises}                                   from './_lib/vars';
 import utils                                            from './_lib/utils';
-import 'setimmediate';
 
 export class PromiseKeeper {
   constructor(promiseKeeperCallback) {
@@ -16,7 +15,7 @@ export class PromiseKeeper {
     try {
       promiseKeeperCallback(resolver, rejector);
     } catch(e) {
-      let timeout = setImmediate(() => rejector(e));
+      let timeout = setTimeout(() => rejector(e));
       errors.set(this, {timeout, e});
     }
   }
