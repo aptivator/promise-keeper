@@ -6,11 +6,11 @@ import utils                                            from './_lib/utils';
 
 export class PromiseKeeper {
   constructor(promiseKeeperCallback) {
-    let rejector = reason => executor.call(this, reason, true);
-    let resolver = value => executor.call(this, value);
+    let resolver = value => executor(this, value);
+    let rejector = reason => executor(this, reason, true);
     
-    rejectors.set(this, []);
     resolvers.set(this, []);
+    rejectors.set(this, []);
     
     try {
       promiseKeeperCallback(resolver, rejector);

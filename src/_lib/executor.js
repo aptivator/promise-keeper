@@ -2,7 +2,7 @@ import {PromiseKeeper}                                  from '../promise-keeper'
 import {errors, rejectors, resolvers, statuses, values} from './vars';
 import utils                                            from './utils';
 
-export function executor(value, isRejector = false) {
+export function executor(promiseInstance, value, isRejector = false) {
   let isPromiseKeeper = value instanceof PromiseKeeper;
   let error = isPromiseKeeper && errors.get(value);
 
@@ -14,17 +14,17 @@ export function executor(value, isRejector = false) {
   
   if(isPromiseKeeper && !error) {
     return value.then(
-      value => executor.call(this, value),
-      reason => executor.call(this, reason, true)
+      value => executor(promiseInstance, value),
+      reason => executor(promiseInstance, reason, true)
     );
   }
   
   setTimeout(() => {
     let handlers = isRejector ? rejectors : resolvers;
-    handlers = handlers.get(this);
+    handlers = handlers.get(promiseInstance);
 
-    values.set(this, value);
-    statuses.set(this, !isRejector);
+    values.set(promiseInstance, value);
+    statuses.set(promiseInstance, !isRejector);
     
     if(handlers.length) {
       return handlers.forEach(handler => handler(value));
