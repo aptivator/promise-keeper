@@ -1,6 +1,6 @@
-let sinon = require('sinon');
-let {expect} = require('chai');
-let PromiseKeeper = require('../../dist/promise-keeper');
+import sinon           from 'sinon';
+import {expect}        from 'chai';
+import {PromiseKeeper} from '../../src/promise-keeper';
 
 describe('then()', function() {
   this.timeout(1000);

@@ -1,5 +1,5 @@
-let {expect} = require('chai');
-let PromiseKeeper = require('../../dist/promise-keeper');
+import {expect}        from 'chai';
+import {PromiseKeeper} from '../../src/promise-keeper';
 
 describe('race()', function() {
   this.timeout(1000);
@@ -26,5 +26,18 @@ describe('race()', function() {
       expect(reason).to.equal('rejected');
       done();
     });    
+  });
+  
+  it('skips rigestering handlers if one of the promises is already fulfilled', done => {
+    let promise1 = PromiseKeeper.resolve(22);
+    let promise2 = new PromiseKeeper(resolve => setTimeout(() => resolve(35), 50));
+    let promise3 = new PromiseKeeper(resolve => setTimeout(() => resolve(45), 25));
+    
+    setTimeout(() => {
+      PromiseKeeper.race([promise1, promise2, promise3]).then(result => {
+        expect(result).to.equal(22);
+        done();
+      });
+    }, 10);
   });
 });

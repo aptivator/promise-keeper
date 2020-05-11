@@ -1,18 +1,20 @@
-import buble from 'rollup-plugin-buble';
-let packageJson = require('./package.json');
-let {'jsnext:main': jsnext, main} = packageJson;
+import babel                            from '@rollup/plugin-babel';
+import resolve                          from '@rollup/plugin-node-resolve';
+let {'jsnext:main': jsnext, main, name} = require('./package.json');
 
 export default {
-  moduleName: 'promise-keeper',
-  entry: 'src/promise-keeper.js',
-  targets: [{
+  input: 'src/promise-keeper.js',
+  output: [{
     format: 'umd',
-    dest: main
+    file: main,
+    name
   }, {
     format: 'es',
-    dest: jsnext
+    file: jsnext,
+    name
   }],
   plugins: [
-    buble()
+    resolve(),
+    babel()
   ]
 };

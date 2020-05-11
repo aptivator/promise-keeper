@@ -1,9 +1,7 @@
-let {expect} = require('chai');
-let PromiseKeeper = require('../../dist/promise-keeper');
+import {expect}        from 'chai';
+import {PromiseKeeper} from '../../src/promise-keeper';
 
 describe('handshaking', function() {
-  this.timeout(1000);
-
   it('handshakes nested promises in the resolver', done => {
     let promise = new PromiseKeeper(resolve => {
       resolve(new PromiseKeeper(resolve => {

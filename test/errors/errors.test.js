@@ -1,19 +1,19 @@
-let sinon = require('sinon');
-let {expect} = require('chai');
-let PromiseKeeper = require('../../dist/promise-keeper');
-let warn;
-let stub;
+import sinon           from 'sinon';
+import {expect}        from 'chai';
+import {PromiseKeeper} from '../../src/promise-keeper';
 
 describe('error handling', function() {
+  let warn;
+  let stub;
   this.timeout(1000);
 
-  before(() => {
+  beforeEach(() => {
     ({warn} = console);
     console.warn = (...args) => {};
     stub = sinon.stub(console, 'warn');
   });
 
-  after(() => {
+  afterEach(() => {
     console.warn = warn;
   });
 

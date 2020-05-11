@@ -1,19 +1,19 @@
-let sinon = require('sinon');
-let {expect} = require('chai');
-let PromiseKeeper = require('../../dist/promise-keeper');
-let warn;
-let stub;
+import sinon           from 'sinon';
+import {expect}        from 'chai';
+import {PromiseKeeper} from '../../src/promise-keeper';
 
 describe('chaining', function() {
+  let warn;
+  let stub;
   this.timeout(1000);
 
-  before(() => {
+  beforeEach(() => {
     ({warn} = console);
     console.warn = (...args) => {};
     stub = sinon.stub(console, 'warn');
   });
 
-  after(() => {
+  afterEach(() => {
     console.warn = warn;
   });
   
@@ -33,7 +33,7 @@ describe('chaining', function() {
       setTimeout(() => reject('rejected'));
     });    
     
-    promise.then().then().then().catch().then().catch().catch().then(null, reason => {
+    promise.then().then().then().catch().catch().catch(reason => {
       expect(reason).to.equal('rejected');
       done();
     });
@@ -46,7 +46,7 @@ describe('chaining', function() {
     
     promise.then(result => {
       throw result;
-    }).then().then().then().catch().catch().then().then().catch();
+    }).catch().catch();
     
     setTimeout(() => {
       expect(stub.args[0][0]).to.match(/^UnhandledPromiseRejectionWarning/);
@@ -59,7 +59,7 @@ describe('chaining', function() {
       throw 'rejected';
     });
     
-    promise.catch(reason => 22).then(result => {
+    promise.catch(reason => 22).catch(result => {
       expect(result).to.equal(22);
       done();
     }, () => {

@@ -1,5 +1,5 @@
-let {expect} = require('chai');
-let PromiseKeeper = require('../../dist/promise-keeper');
+import {expect}        from 'chai';
+import {PromiseKeeper} from '../../src/promise-keeper';
 
 describe('catch()', function() {
   this.timeout(1000);
