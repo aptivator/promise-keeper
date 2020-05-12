@@ -28,6 +28,17 @@ describe('chaining', function() {
     });
   });
   
+  it('passes resolve result through multiple then/catches', done => {
+    let promise = new PromiseKeeper(resolve => {
+      setTimeout(() => resolve('resolved'));
+    });    
+    
+    promise.then().then().then().catch().catch().then(result => {
+      expect(result).to.equal('resolved');
+      done();
+    });    
+  });
+  
   it('passes rejected resolve through multiple thens/catches', done => {
     let promise = new PromiseKeeper((resolve, reject) => {
       setTimeout(() => reject('rejected'));

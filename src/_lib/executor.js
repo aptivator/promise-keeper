@@ -12,7 +12,7 @@ export function executor(promiseInstance, value, isRejector = false) {
     throw e;
   }
   
-  if(isPromiseKeeper && !error) {
+  if(isPromiseKeeper) {
     return value.then(
       value => executor(promiseInstance, value),
       reason => executor(promiseInstance, reason, true)
