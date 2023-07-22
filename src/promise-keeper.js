@@ -1,123 +1,200 @@
-import {emptyPromiser}                                  from './_lib/empty-promiser';
-import {executor}                                       from './_lib/executor';
-import {errors, resolvers, rejectors, statuses, values} from './_lib/vars';
-import {thenPromises}                                   from './_lib/vars';
-import utils                                            from './_lib/utils';
+import {getAggregateError, getPromiseParts} from './_lib/utils';
+import {unhandledRejectionWarning}          from './_lib/utils';
+import {thenPromises}                       from './_lib/vars';
 
 export class PromiseKeeper {
-  constructor(promiseKeeperCallback) {
-    let resolver = value => executor(this, value);
-    let rejector = reason => executor(this, reason, true);
-    
-    resolvers.set(this, []);
-    rejectors.set(this, []);
-    
+  #onRejects = [];
+  #onResolves = [];
+  #status;
+  #value;
+
+  constructor(callback) {
+    let resolve = (value) => this.#settle(value);
+    let reject = (reason) => this.#settle(reason, true);
+
     try {
-      promiseKeeperCallback(resolver, rejector);
+      callback(resolve, reject);
     } catch(e) {
-      let timeout = setTimeout(() => rejector(e));
-      errors.set(this, {timeout, e});
+      reject(e);
     }
   }
   
+  #settle(value, isRejector = false) {
+    if(value instanceof PromiseKeeper) {
+      return value.then(
+        (value) => this.#settle(value),
+        (reason) => this.#settle(reason, true)
+      );
+    }
+
+    queueMicrotask(() => {
+      let onSettleHandlers = isRejector ? this.#onRejects : this.#onResolves;
+      this.#value = value;
+      this.#status = !isRejector;
+  
+      if(onSettleHandlers.length) {
+        return onSettleHandlers.forEach((onSettle) => onSettle(value));
+      }
+  
+      if(isRejector) {
+        unhandledRejectionWarning(value);
+      }
+    });
+  }
+
   static all(promises) {
     let results = [];
     let {length} = promises;
     let fulfilledCount = 0;
-    let {promise, rejector, resolver} = emptyPromiser();
-    
+    let {promise, reject, resolve} = getPromiseParts();
+
     promises.forEach((promise, index) => {
-      promise.then(result => {
+      promise.then((result) => {
         results[index] = result;
         
         if(++fulfilledCount === length) {
-          resolver(results);
+          resolve(results);
         }
-      }, rejector);
+      }, reject);
     });
     
     return promise;
   }
   
+  static allSettled(promises = []) {
+    let results = [];
+    let {length} = promises;
+    let settledCount = 0;
+    let {promise, resolve} = getPromiseParts();
+
+    if(length) {
+      promises.forEach((promise, index) => {
+        promise
+          .then(
+            (value) => results[index] = {status: 'fulfilled', value},
+            (reason) => results[index] = {status: 'rejected', reason}
+          )
+          .finally(() => {
+            if(++settledCount === length) {
+              resolve(results);
+            }
+          });
+      });
+    } else {
+      resolve(results);
+    }
+
+    return promise;
+  }
+
+  static any(promises = []) {
+    let {length} = promises;
+    let reasons = [];
+    let fulfilled;
+    let rejectedCount = 0;
+    let {promise, reject, resolve} = getPromiseParts();
+
+    if(length) {
+      promises.forEach((promise, index) => {
+        promise.then((value) => {
+          if(!fulfilled) {
+            fulfilled = true;
+            resolve(value);
+          }
+        }, (reason) => {
+          if(!fulfilled) {
+            reasons[index] = reason;
+            
+            if(++rejectedCount === length) {
+              let aggregateError = getAggregateError(reasons);
+              reject(aggregateError);
+            }
+          }
+        });
+      });
+    } else {
+      let aggregateError = getAggregateError(reasons);
+      reject(aggregateError);
+    }
+
+    return promise;
+  }
+
   static race(promises) {
     let completed;
-    let {promise, rejector, resolver} = emptyPromiser();
+    let {promise, reject, resolve} = getPromiseParts();
     
-    function raceGenerator(executor) {
-      return value => {
+    function raceGenerator(settle) {
+      return (value) => {
         if(completed) {
           return;
         }
         
         completed = true;
-        executor(value);
+        settle(value);
       };
     }
 
     for(let promise of promises) {
-      if(completed) {
-        break;
-      }
-      
-      promise.then(raceGenerator(resolver), raceGenerator(rejector));
+      promise.then(raceGenerator(resolve), raceGenerator(reject));
     }
     
     return promise;
   }
   
   static reject(reason) {
-    return new PromiseKeeper((resolver, rejector) => rejector(reason));
+    return new PromiseKeeper((resolve, reject) => reject(reason));
   }
   
   static resolve(value) {
-    return new PromiseKeeper(resolver => resolver(value));
+    return new PromiseKeeper((resolve) => resolve(value));
   }
   
-  catch(rejectHandler) {
-    return this.then(undefined, rejectHandler);
+  catch(onReject) {
+    return this.then(undefined, onReject);
   }
   
   finally(callback) {
     return this.then(() => callback(), () => callback());
   }
   
-  then(resolveHandler, rejectHandler) {
-    let {promise, rejector, resolver} = emptyPromiser();
+  then(onResolve, onReject) {
+    let {promise, reject, resolve} = getPromiseParts();
     
-    let handlerRegistrationConfigs = [
-      {handler: resolveHandler, handlers: resolvers, executor: resolver, status: true}, 
-      {handler: rejectHandler, handlers: rejectors, executor: rejector, status: false}
+    let settlersConfigs = [
+      [onResolve, this.#onResolves, resolve, true], 
+      [onReject, this.#onRejects, reject, false]
     ];
 
     thenPromises.add(this);
 
-    for(let {handler, handlers, executor, status} of handlerRegistrationConfigs) {
-      let _handler = value => {
-        try {
-          if(!handler && !status && !thenPromises.has(promise)) {
-            return utils.unhandledRejectionWarning(value);
-          }
-          
-          if(!handler) {
-            handler = value => value;
+    for(let [onSettle, onSettleHandlers, settle, status] of settlersConfigs) {
+      let internalOnSettle = ((onSettle, status) => {
+        return function(value) {
+          if(!status && !onSettle && !thenPromises.has(promise)) {
+            return unhandledRejectionWarning(value);
           }
 
-          value = handler(value);
-        } catch(e) {
-          return rejector(e);
+          try {
+            if(onSettle) {
+              value = onSettle(value);
+            }
+          } catch(e) {
+            return reject(e);
+          }
+          
+          if(thenPromises.has(promise)) {
+            settle(value);
+          }
         }
-        
-        if(thenPromises.has(promise)) {
-          executor(value);
-        }
-      };
+      })(onSettle, status);
       
-      if(statuses.get(this) === status) {
-        _handler(values.get(this));
+      if(this.#status === status) {
+        internalOnSettle(this.#value);
         break;
       }
       
-      handlers.get(this).push(_handler);
+      onSettleHandlers.push(internalOnSettle);
     }
     
     return promise;
