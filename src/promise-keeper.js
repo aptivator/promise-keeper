@@ -93,6 +93,7 @@ export class PromiseKeeper {
     let fulfilled;
     let rejectedCount = 0;
     let {promise, reject, resolve} = getPromiseParts();
+    let _reject = () => reject(getAggregateError(reasons));
 
     if(length) {
       promises.forEach((promise, index) => {
@@ -106,15 +107,13 @@ export class PromiseKeeper {
             reasons[index] = reason;
             
             if(++rejectedCount === length) {
-              let aggregateError = getAggregateError(reasons);
-              reject(aggregateError);
+              _reject();
             }
           }
         });
       });
     } else {
-      let aggregateError = getAggregateError(reasons);
-      reject(aggregateError);
+      _reject();
     }
 
     return promise;
