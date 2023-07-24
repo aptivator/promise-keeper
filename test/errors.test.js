@@ -1,6 +1,7 @@
-import sinon           from 'sinon';
-import {expect}        from 'chai';
-import {PromiseKeeper} from '../src/promise-keeper';
+import sinon                              from 'sinon';
+import {expect}                           from 'chai';
+import {unhandledRejectionWarningMessage} from '../src/_lib/vars';
+import {PromiseKeeper}                    from '../src/promise-keeper';
 
 describe('Error Handling', () => {
   let warn;
@@ -61,17 +62,19 @@ describe('Error Handling', () => {
     });
     
     setTimeout(() => {
-      expect(stub.args[0][0]).to.match(/^UnhandledPromiseRejectionWarning/);
+      expect(stub.args[0][0]).to.include(unhandledRejectionWarningMessage);
       done();
     });
   });
   
   it('consoles a warning when no handler is provided for handler error', (done) => {
     let promise = new PromiseKeeper((resolve) => resolve('resolved'));
-    promise.then((result) => {throw result;});
+    promise.then((result) => {
+      throw result;
+    });
     
     setTimeout(() => {
-      expect(stub.args[0][0]).to.match(/^UnhandledPromiseRejectionWarning/);
+      expect(stub.args[0][0]).to.include(unhandledRejectionWarningMessage);
       done();
     });
   });
@@ -86,7 +89,7 @@ describe('Error Handling', () => {
     }).catch().then().catch();
     
     setTimeout(() => {
-      expect(stub.args[0][0]).to.match(/^UnhandledPromiseRejectionWarning/);
+      expect(stub.args[0][0]).to.include(unhandledRejectionWarningMessage);
       done();
     });
   });
