@@ -122,20 +122,17 @@ export class PromiseKeeper {
   static race(promises) {
     let completed;
     let {promise, reject, resolve} = getPromiseParts();
-    
-    function raceGenerator(settle) {
+    let [onResolve, onReject] = [resolve, reject].map((settle) => {
       return (value) => {
-        if(completed) {
-          return;
+        if(!completed) {
+          completed = true;
+          settle(value);
         }
-        
-        completed = true;
-        settle(value);
-      };
-    }
+      }; 
+    });
 
     for(let promise of promises) {
-      promise.then(raceGenerator(resolve), raceGenerator(reject));
+      promise.then(onResolve, onReject);
     }
     
     return promise;
