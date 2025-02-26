@@ -1,4 +1,4 @@
-import {getAggregateError, unhandledRejectionWarning}  from './_lib/utils';
+import {getAggregateError, unhandledRejectionWarning} from './_lib/utils';
 
 export class PromiseKeeper {
   #onRejects = [];
