@@ -4,7 +4,8 @@
   "description": "Minimalist (and complete) implementation of JavaScript Promises",
   "scripts": {
     "build": "rollup -c",
-    "test": "nyc mocha ./test/**/*.test.js ./test/**.test.js --require @babel/register --timeout 10000",
+    "test": "mocha ./test/**/*.test.js ./test/**.test.js --require @babel/register --timeout 10000",
+    "test:coverage": "c8 npm run test",
     "watch": "npm test && run-when-changed --watch \"test/**/*.js\" --exec \"npm test\"",
     "dev": "rollup -c -w & npm run watch"
   },
@@ -28,14 +29,13 @@
     "@babel/register": "^7.9.0",
     "@rollup/plugin-babel": "^5.0.0",
     "@rollup/plugin-node-resolve": "^7.1.3",
+    "c8": "^10.1.3",
     "chai": "^4.2.0",
     "mocha": "^7.1.2",
-    "nyc": "^15.0.1",
+    "nyc": "^17.1.0",
     "rollup": "^2.9.0",
     "run-when-changed": "^2.1.0",
-    "sinon": "^9.0.2"
-  },
-  "dependencies": {
-    "setimmediate": "^1.0.5"
+    "sinon": "^9.0.2",
+    "var-trap": "^1.0.0"
   }
 }

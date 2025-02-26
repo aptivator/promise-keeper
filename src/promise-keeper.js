@@ -1,44 +1,80 @@
-import {getAggregateError, getPromiseParts} from './_lib/utils';
-import {unhandledRejectionWarning}          from './_lib/utils';
-import {thenPromises}                       from './_lib/vars';
+import {getAggregateError, unhandledRejectionWarning}  from './_lib/utils';
 
 export class PromiseKeeper {
   #onRejects = [];
   #onResolves = [];
+  #reason;
   #status;
+  #thenned;
   #value;
 
   constructor(callback) {
-    let resolve = (value) => this.#settle(value);
-    let reject = (reason) => this.#settle(reason, true);
+    let resolve = (value) => this.#settleResolve(value);
+    let reject = (reason) => this.#settleReject(reason);
 
     try {
       callback(resolve, reject);
     } catch(e) {
-      reject(e);
+      reject(this.#reason || e);
     }
   }
   
-  #settle(value, isRejector = false) {
+  #executeOnResolves(value) {
+    this.#onResolves.forEach((onResolve) => onResolve(value));
+  }
+
+  #settleResolve(value) {
     if(value instanceof PromiseKeeper) {
       return value.then(
-        (value) => this.#settle(value),
-        (reason) => this.#settle(reason, true)
+        (value) => this.#settleResolve(value),
+        (reason) => {
+          this.#reason = reason;
+          this.#settleReject(reason);
+        }
       );
     }
 
+    this.#value = value;
+    this.#status = true;
+
+    if(this.#thenned) {
+      return this.#executeOnResolves(value);
+    }
+
     queueMicrotask(() => {
-      let onSettleHandlers = isRejector ? this.#onRejects : this.#onResolves;
-      this.#value = value;
-      this.#status = !isRejector;
-  
-      if(onSettleHandlers.length) {
-        return onSettleHandlers.forEach((onSettle) => onSettle(value));
+      if(this.#thenned) {
+        this.#executeOnResolves(value);
       }
-  
-      if(isRejector) {
-        unhandledRejectionWarning(value);
+    });
+  }
+
+  #executeOnRejects(reason) {
+    this.#onRejects.forEach((onReject) => onReject(reason));
+  }
+
+  #settleReject(reason) {
+    if(reason instanceof PromiseKeeper) {
+      let rejector = (reason) => {
+        this.#reason = reason;
+        this.#settleReject(reason);
       }
+
+      return reason.then(rejector, rejector);
+    }
+
+    this.#reason = reason;
+    this.#status = false;
+
+    if(this.#thenned) {
+      return this.#executeOnRejects(reason);
+    }
+    
+    queueMicrotask(() => {
+      if(this.#thenned) {
+        return this.#executeOnRejects(reason);
+      }
+
+      unhandledRejectionWarning(reason);
     });
   }
 
@@ -46,7 +82,7 @@ export class PromiseKeeper {
     let results = [];
     let {length} = promises;
     let fulfilledCount = 0;
-    let {promise, reject, resolve} = getPromiseParts();
+    let {promise, reject, resolve} = PromiseKeeper.withResolvers();
 
     promises.forEach((promise, index) => {
       promise.then((result) => {
@@ -65,7 +101,7 @@ export class PromiseKeeper {
     let results = [];
     let {length} = promises;
     let settledCount = 0;
-    let {promise, resolve} = getPromiseParts();
+    let {promise, resolve} = PromiseKeeper.withResolvers();
 
     if(length) {
       promises.forEach((promise, index) => {
@@ -92,7 +128,7 @@ export class PromiseKeeper {
     let reasons = [];
     let fulfilled;
     let rejectedCount = 0;
-    let {promise, reject, resolve} = getPromiseParts();
+    let {promise, reject, resolve} = PromiseKeeper.withResolvers();
     let _reject = () => reject(getAggregateError(reasons));
 
     if(length) {
@@ -121,7 +157,7 @@ export class PromiseKeeper {
 
   static race(promises) {
     let completed;
-    let {promise, reject, resolve} = getPromiseParts();
+    let {promise, reject, resolve} = PromiseKeeper.withResolvers();
     let [onResolve, onReject] = [resolve, reject].map((settle) => {
       return (value) => {
         if(!completed) {
@@ -146,53 +182,86 @@ export class PromiseKeeper {
     return new PromiseKeeper((resolve) => resolve(value));
   }
   
+  static try(func, ...args) {
+    let {promise, resolve, reject} = PromiseKeeper.withResolvers();
+
+    try {
+      let result = func(...args);
+      resolve(result);
+    } catch(e) {
+      reject(e);
+    }
+
+    return promise;
+  }
+
+  static withResolvers() {
+    let resolve, reject;
+    let promise = new PromiseKeeper((_resolve, _reject) => {
+      resolve = _resolve;
+      reject = _reject;
+    });
+    
+    return {promise, resolve, reject};
+  }
+
   catch(onReject) {
     return this.then(undefined, onReject);
   }
   
   finally(callback) {
-    return this.then(() => callback(), () => callback());
+    let finalCallback = () => callback();
+    return this.then(finalCallback, finalCallback);
   }
   
-  then(onResolve, onReject) {
-    let {promise, reject, resolve} = getPromiseParts();
-    
-    let settlersConfigs = [
-      [onResolve, this.#onResolves, resolve, true], 
-      [onReject, this.#onRejects, reject, false]
-    ];
-
-    thenPromises.add(this);
-
-    for(let [onSettle, onSettleHandlers, settle, status] of settlersConfigs) {
-      let internalOnSettle = ((onSettle, status) => {
-        return function(value) {
-          if(!status && !onSettle && !thenPromises.has(promise)) {
-            return unhandledRejectionWarning(value);
-          }
-
-          try {
-            if(onSettle) {
-              value = onSettle(value);
-            }
-          } catch(e) {
-            return reject(e);
-          }
-          
-          if(thenPromises.has(promise)) {
-            settle(value);
-          }
+  #makeOnResolve(onResolve, resolve, reject) {
+    return function(value) {
+      try {
+        if(onResolve) {
+          value = onResolve(value);
         }
-      })(onSettle, status);
-      
-      if(this.#status === status) {
-        internalOnSettle(this.#value);
-        break;
+
+        resolve(value);
+      } catch(e) {
+        return reject(e);
       }
-      
-      onSettleHandlers.push(internalOnSettle);
     }
-    
+  }
+
+  #makeOnReject(onReject, resolve, reject) {
+    return function(reason) {
+      try {
+        if(onReject) {
+          reason = onReject(reason);
+          return resolve(reason);
+        }
+
+        throw reason;
+      } catch(e) {
+        reject(e);
+      }
+    }
+  }
+
+  then(onResolve, onReject) {
+    let {promise, resolve, reject} = PromiseKeeper.withResolvers();
+    let status = this.#status;
+
+    this.#thenned = true;
+
+    if(status) {
+      onResolve = this.#makeOnResolve(onResolve, resolve, reject);
+      onResolve(this.#value);
+    } else if(status === false) {
+      onReject = this.#makeOnReject(onReject, resolve, reject);
+      onReject(this.#reason);
+    } else {
+      onResolve = this.#makeOnResolve(onResolve, resolve, reject);
+      onReject = this.#makeOnReject(onReject, promise, resolve, reject);
+      this.#onResolves.push(onResolve);
+      this.#onRejects.push(onReject);
+    }
+
     return promise;
   }
 }
