@@ -41,11 +41,7 @@ export class PromiseKeeper {
       return this.#executeOnResolves(value);
     }
 
-    queueMicrotask(() => {
-      if(this.#thenned) {
-        this.#executeOnResolves(value);
-      }
-    });
+    queueMicrotask(() => this.#executeOnResolves(value));
   }
 
   #executeOnRejects(reason) {
@@ -245,14 +241,13 @@ export class PromiseKeeper {
 
   then(onResolve, onReject) {
     let {promise, resolve, reject} = PromiseKeeper.withResolvers();
-    let status = this.#status;
-
+    
     this.#thenned = true;
 
-    if(status) {
+    if(this.#status) {
       onResolve = this.#makeOnResolve(onResolve, resolve, reject);
       onResolve(this.#value);
-    } else if(status === false) {
+    } else if(this.#status === false) {
       onReject = this.#makeOnReject(onReject, resolve, reject);
       onReject(this.#reason);
     } else {
