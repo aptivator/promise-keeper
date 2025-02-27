@@ -32,7 +32,6 @@ describe('static methods', () => {
     });
   });
   
-
   describe('allSettled()', () => {
     it('returns an array of object results from an array of settled promises',  async () => {
       let results = [10, 'rejected', 25];
