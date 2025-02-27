@@ -18,10 +18,6 @@ export class PromiseKeeper {
       reject(this.#reason || e);
     }
   }
-  
-  #executeOnResolves(value) {
-    this.#onResolves.forEach((onResolve) => onResolve(value));
-  }
 
   #settleResolve(value) {
     if(value instanceof PromiseKeeper) {
@@ -37,15 +33,11 @@ export class PromiseKeeper {
     this.#value = value;
     this.#status = true;
 
-    if(this.#thenned) {
-      return this.#executeOnResolves(value);
-    }
-
-    queueMicrotask(() => this.#executeOnResolves(value));
-  }
-
-  #executeOnRejects(reason) {
-    this.#onRejects.forEach((onReject) => onReject(reason));
+    queueMicrotask(() => {
+      this.#onResolves.forEach((onResolve) => {
+        onResolve(value);
+      });
+    });
   }
 
   #settleReject(reason) {
@@ -57,20 +49,18 @@ export class PromiseKeeper {
 
       return reason.then(rejector, rejector);
     }
-
-    this.#reason = reason;
+    
+    this.#reason ??= reason;
     this.#status = false;
 
-    if(this.#thenned) {
-      return this.#executeOnRejects(reason);
-    }
-    
     queueMicrotask(() => {
       if(this.#thenned) {
-        return this.#executeOnRejects(reason);
+        return this.#onRejects.forEach((onReject) => {
+          onReject(this.#reason);
+        });
       }
 
-      unhandledRejectionWarning(reason);
+      unhandledRejectionWarning(this.#reason);
     });
   }
 
@@ -160,7 +150,7 @@ export class PromiseKeeper {
           completed = true;
           settle(value);
         }
-      }; 
+      };
     });
 
     for(let promise of promises) {
@@ -206,8 +196,28 @@ export class PromiseKeeper {
   }
   
   finally(callback) {
-    let finalCallback = () => callback();
-    return this.then(finalCallback, finalCallback);
+    let {promise, resolve, reject} = PromiseKeeper.withResolvers();
+
+    function executeCallback() {
+      try {
+        callback();
+        return true;
+      } catch(e) {
+        reject(e);
+      }
+    }
+
+    this.then((value) => {
+      if(executeCallback()) {
+        resolve(value);
+      }
+    }, (reason) => {
+      if(executeCallback()) {
+        reject(reason);
+      }
+    });
+
+    return promise;
   }
   
   #makeOnResolve(onResolve, resolve, reject) {
@@ -246,13 +256,13 @@ export class PromiseKeeper {
 
     if(this.#status) {
       onResolve = this.#makeOnResolve(onResolve, resolve, reject);
-      onResolve(this.#value);
+      queueMicrotask(() => onResolve(this.#value));
     } else if(this.#status === false) {
       onReject = this.#makeOnReject(onReject, resolve, reject);
-      onReject(this.#reason);
+      queueMicrotask(() => onReject(this.#reason));
     } else {
       onResolve = this.#makeOnResolve(onResolve, resolve, reject);
-      onReject = this.#makeOnReject(onReject, promise, resolve, reject);
+      onReject = this.#makeOnReject(onReject, resolve, reject);
       this.#onResolves.push(onResolve);
       this.#onRejects.push(onReject);
     }
